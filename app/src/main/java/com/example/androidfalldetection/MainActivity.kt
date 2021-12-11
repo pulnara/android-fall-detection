@@ -4,15 +4,22 @@ import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-
+import com.example.androidfalldetection.ml.FallDetectionModel
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
 class MainActivity : AppCompatActivity() {
     // create variables of the two class
     private var accelerometer: Accelerometer? = null
     private var gyroscope: Gyroscope? = null
+    private lateinit var model: FallDetectionModel
+    private var measurments_count = 0
+    private var measurements: FloatArray = FloatArray(4656)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        model = FallDetectionModel.newInstance(this)
 
         // instantiate them with this as context
         accelerometer = Accelerometer(this)
@@ -28,6 +35,32 @@ class MainActivity : AppCompatActivity() {
                     window.decorView.setBackgroundColor(Color.RED)
                 } else if (tx < -1.0f) {
                     window.decorView.setBackgroundColor(Color.BLUE)
+                }
+
+                measurements
+                measurments_count += 1
+
+                if(measurments_count > 300) {
+
+                    val mes_len = measurements.count()
+                    while(mes_len < 1552){
+                        measurements[mes_len - 1] = 64F
+                    }
+
+                    val tbuffer = TensorBuffer.createFixedSize(intArrayOf(1, 1552, 3), DataType.FLOAT32)
+                    tbuffer.loadArray(measurements)
+                    val byteBuffer = tbuffer.buffer
+
+                    val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 1552, 3), DataType.FLOAT32)
+                    inputFeature0.loadBuffer(byteBuffer)
+
+                    val outputs = model.process(inputFeature0)
+                    val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+                    Log.i("MODEL", outputs.toString())
+                    Log.i("MODEL_F", outputFeature0.toString())
+
+                    measurments_count = 0
+                    measurements = FloatArray(4656)
                 }
             }
         })
@@ -51,6 +84,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        model = FallDetectionModel.newInstance(this)
+
         // this will send notification to
         // both the sensors to register
         accelerometer!!.register()
@@ -60,6 +95,8 @@ class MainActivity : AppCompatActivity() {
     // create on pause method
     override fun onPause() {
         super.onPause()
+
+        model.close()
 
         // this will send notification in
         // both the sensors to unregister
