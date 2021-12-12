@@ -1,8 +1,6 @@
 package com.example.androidfalldetection
 
 import android.util.Log
-import kotlin.math.atan
-import kotlin.math.sqrt
 
 class FallDetector {
 

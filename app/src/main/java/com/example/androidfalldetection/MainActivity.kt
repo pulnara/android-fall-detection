@@ -2,9 +2,8 @@ package com.example.androidfalldetection
 
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import java.time.LocalDateTime
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,9 +20,13 @@ class MainActivity : AppCompatActivity() {
         accelerometer!!.setListener(object : Accelerometer.Listener {
             //on translation method of accelerometer
             override fun onTranslation(tx: Float, ty: Float, ts: Float) {
-                //Log.i("ACCELEROMETER", "($tx, $ty, $ts)");
+                //Log.i("ACCELEROMETER", "($tx, $ty, $ts)")
+                xyz.text = "($tx, $ty, $ts)"
                 // set the color red if the device moves in positive x axis
                 val accelerometerData = AccelerometerData(tx, ty, ts)
+                magnitude.text = accelerometerData.countAlpha().toString()
+                roll.text = accelerometerData.countRoll().toString()
+                pitch.text = accelerometerData.countPitch().toString()
                 if (fallDetector.fallDetected(accelerometerData))
                 {
                     window.decorView.setBackgroundColor(Color.RED)

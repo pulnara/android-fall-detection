@@ -3,10 +3,7 @@ package com.example.androidfalldetection
 import kotlin.math.atan
 import kotlin.math.sqrt
 
-class AccelerometerData(x: Float, y: Float, z: Float) {
-    val x: Float = x
-    val y: Float = y
-    val z: Float = z
+class AccelerometerData(val x: Float, val y: Float, val z: Float) {
 
     fun countRoll(): Float {
         return atan(y / sqrt( x * x + z * z  ))
