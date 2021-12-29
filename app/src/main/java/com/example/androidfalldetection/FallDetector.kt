@@ -1,29 +1,49 @@
 package com.example.androidfalldetection
 
 import android.graphics.Color
+import android.graphics.drawable.AnimationDrawable
+import android.graphics.drawable.ColorDrawable
 import android.hardware.SensorManager
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Bundle
 import android.os.Handler
-import android.widget.TextView
-import kotlinx.android.synthetic.main.activity_main.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import androidx.fragment.app.Fragment
 
 
-class FallDetector {
+class FallDetector : Fragment(R.layout.fragment_fall_detection) {
 
     var running:Boolean = true
     var acceleration_g = SensorManager.GRAVITY_EARTH
     var landingFlag:Boolean = false
     var layingOnGroundFlag:Boolean = false
     var startTime:Long = 0
-    var textView: TextView? = null
-    var fallCountView: TextView? = null
-    var fallCount = 0;
+    var fallCount = 0
+    lateinit var fallDetectionView: View
+    private lateinit var abortButton: Button
 
-    fun detectFall(ad: AccelerometerData, text: TextView, fall_count:TextView) {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        fallDetectionView = inflater.inflate(R.layout.fragment_fall_detection, container, false)
+        abortButton = fallDetectionView.findViewById(R.id.abortButton)
+        abortButton.setOnClickListener {
+            abortButton.visibility = View.INVISIBLE
+            fallDetectionView.background = null
+            resetVariables()
+        }
+        return fallDetectionView
+    }
+
+    fun detectFall(ad: AccelerometerData) {
         val acc = ad.countAcceleration()
-        textView = text
-        fallCountView = fall_count
-
-        acceleration_g = acc / SensorManager.GRAVITY_EARTH;
+        acceleration_g = acc / SensorManager.GRAVITY_EARTH
 
         //PHASE ONE
         //In a free fall the x,y,z values of the accelerometer are near zero.
@@ -33,17 +53,35 @@ class FallDetector {
             if (!running) {
                 running = true
             }
-            startTime = System.currentTimeMillis();
-            timerHandler.postDelayed(timerRunnable, 0);
+            startTime = System.currentTimeMillis()
+            timerHandler.postDelayed(timerRunnable, 0)
 
         }
     }
 
-//    fun resetVariables() {
-//        layingOnGroundFlag = false
-//        landingFlag = false
-//        running = false
-//    }
+    fun resetVariables() {
+        layingOnGroundFlag = false
+        landingFlag = false
+        running = false
+    }
+
+    fun addBackgroundAnimation() {
+        val drawable = AnimationDrawable()
+        val handler = Handler()
+
+        drawable.addFrame(ColorDrawable(Color.RED), 400)
+        drawable.addFrame(ColorDrawable(Color.GREEN), 400)
+        drawable.setOneShot(false)
+
+        fallDetectionView.setBackground(drawable)
+        handler.postDelayed( { drawable.start() }, 100)
+    }
+
+    fun playNotificationSound() {
+        val alarmUri: Uri? = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val ringtone = RingtoneManager.getRingtone(context, alarmUri)
+        ringtone.play()
+    }
 
     //Runs without a timer by reposting this handler at the end of the runnable.
     var timerHandler: Handler = Handler()
@@ -64,20 +102,15 @@ class FallDetector {
             }
             //PHASE THREE
             //If the phone is not moving for two seconds after the landing, the user/phone is laying on the ground.
-            if (seconds <= 3 && landingFlag == true) {
-                if (acceleration_g >= 0.9 && acceleration_g <= 1.1) {
+            if (seconds > 2 && seconds <= 3 && landingFlag == true && acceleration_g >= 0.9 && acceleration_g <= 1.1) {
                     layingOnGroundFlag = true
-                } else {
-//                    resetVariables()
-                }
-//                return
             }
-            if (layingOnGroundFlag == true && seconds > 3) {
-                var ms = millis.toString()
-                textView!!.text = "UPADEK po $ms ms, watek ${Thread.currentThread().getName()}, ${Thread.currentThread().getId()}\n"
+            if (layingOnGroundFlag == true) {
                 fallCount += 1
-                fallCountView!!.text = fallCount.toString()
                 layingOnGroundFlag = false
+                abortButton.visibility = View.VISIBLE
+                addBackgroundAnimation()
+                playNotificationSound()
             } else if (seconds > 3 && landingFlag == false) {
                 //reset variables??
                 running = false

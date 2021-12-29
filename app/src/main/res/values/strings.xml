@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Android Fall Detection</string>
+    <string name="false_alarm">FALSE ALARM!</string>
+    <string name="x_y_z">(x, y, z):</string>
+    <string name="magnitude">Magnitude:</string>
 </resources>

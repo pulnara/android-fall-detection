@@ -1,6 +1,5 @@
 package com.example.androidfalldetection
 
-import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
@@ -13,7 +12,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        fall_count.text = "czesc"
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fallDetectionFragment, fallDetector)
+            commit()
+        }
         // instantiate them with this as context
         accelerometer = Accelerometer(this)
         // create a listener for accelerometer
@@ -21,13 +23,12 @@ class MainActivity : AppCompatActivity() {
             //on translation method of accelerometer
             override fun onTranslation(tx: Float, ty: Float, ts: Float) {
                 //Log.i("ACCELEROMETER", "($tx, $ty, $ts)")
-                xyz.text = "($tx, $ty, $ts)"
+                val coordinatesAsString = "($tx, $ty, $ts)"
+                xyz.text = coordinatesAsString
                 // set the color red if the device moves in positive x axis
                 val accelerometerData = AccelerometerData(tx, ty, ts)
                 magnitude.text = accelerometerData.countAcceleration().toString()
-                roll.text = accelerometerData.countRoll().toString()
-                pitch.text = accelerometerData.countPitch().toString()
-                fallDetector.detectFall(accelerometerData, fall_coords, fall_count)
+                fallDetector.detectFall(accelerometerData)
             }
         })
 
