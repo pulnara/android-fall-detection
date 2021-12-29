@@ -14,7 +14,7 @@ class AccelerometerData(val x: Float, val y: Float, val z: Float) {
         return atan(x / sqrt( y * y + z * z  )) * 180 / PI.toFloat()
     }
 
-    fun countAlpha(): Float {
+    fun countAcceleration(): Float {
         return sqrt(x * x + y * y + z * z)
     }
 }
