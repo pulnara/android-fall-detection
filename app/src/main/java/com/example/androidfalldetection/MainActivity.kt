@@ -10,10 +10,11 @@ class MainActivity : AppCompatActivity() {
     // create variables of the two class
     private var accelerometer: Accelerometer? = null
     private val fallDetector: FallDetector = FallDetector()
+    var fallCount = 0;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        fall_count.text = fallCount.toString()
         // instantiate them with this as context
         accelerometer = Accelerometer(this)
         // create a listener for accelerometer
@@ -24,11 +25,17 @@ class MainActivity : AppCompatActivity() {
                 xyz.text = "($tx, $ty, $ts)"
                 // set the color red if the device moves in positive x axis
                 val accelerometerData = AccelerometerData(tx, ty, ts)
-                magnitude.text = accelerometerData.countAlpha().toString()
-                roll.text = accelerometerData.countRoll().toString()
-                pitch.text = accelerometerData.countPitch().toString()
+                val magnitudeText = accelerometerData.countAlpha().toString()
+                val rollText = accelerometerData.countRoll().toString()
+                val pitchText = accelerometerData.countPitch().toString()
+                magnitude.text = magnitudeText
+                roll.text = rollText
+                pitch.text = pitchText
                 if (fallDetector.fallDetected(accelerometerData))
                 {
+                    fallCount += 1
+                    fall_count.text = fallCount.toString()
+                    fall_coords.text = "$ts $magnitudeText $rollText $pitchText "
                     window.decorView.setBackgroundColor(Color.RED)
                 }
             }
