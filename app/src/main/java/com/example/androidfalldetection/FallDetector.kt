@@ -1,5 +1,8 @@
 package com.example.androidfalldetection
 
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
 import android.graphics.drawable.ColorDrawable
@@ -8,6 +11,8 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.telephony.SmsManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,12 +30,15 @@ class FallDetector : Fragment(R.layout.fragment_fall_detection) {
     var fallCount = 0
     lateinit var fallDetectionView: View
     private lateinit var abortButton: Button
+    private lateinit var smsManager: SmsManager
+    var smsSent = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        smsManager = SmsManager.getDefault()
         fallDetectionView = inflater.inflate(R.layout.fragment_fall_detection, container, false)
         abortButton = fallDetectionView.findViewById(R.id.abortButton)
         abortButton.setOnClickListener {
@@ -111,11 +119,36 @@ class FallDetector : Fragment(R.layout.fragment_fall_detection) {
                 abortButton.visibility = View.VISIBLE
                 addBackgroundAnimation()
                 playNotificationSound()
-            } else if (seconds > 3 && landingFlag == false) {
+            }else if (seconds > 3 && landingFlag == false) {
                 //reset variables??
                 running = false
+            } else if ( seconds > 10 && landingFlag == true && !smsSent){
+                sendSms()
+                smsSent = true
             }
             timerHandler.postDelayed(this, 500)
+        }
+    }
+
+    private fun sendSms() {
+        val applicationContext = requireContext()
+        val sharedPreferences = applicationContext.getSharedPreferences(
+            Constants.AppName,
+            Context.MODE_PRIVATE
+        )
+        val phoneNumber = sharedPreferences.getString(Constants.PhoneNumber, null)
+
+        phoneNumber?.also { number ->
+            val intent = Intent(applicationContext, FallDetector::class.java)
+            val pendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, 0)
+
+            smsManager.sendTextMessage(
+                number,
+                null,
+                Constants.FallDetectedMessage,
+                pendingIntent,
+                null
+            )
         }
     }
 
