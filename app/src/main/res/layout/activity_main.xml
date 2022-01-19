@@ -5,20 +5,44 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:background="@color/background"
+    tools:context=".MainActivity"
+    android:layout_gravity="bottom">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:textColor="@color/white"
+        android:textAlignment="center"
+        android:shadowColor="@color/shadow"
+        android:shadowDx="4"
+        android:shadowDy="4"
+        android:shadowRadius="10"
+        android:textStyle="bold"
+        android:textSize="35sp"
+        android:background="@color/primeColor"/>
 
     <FrameLayout
         android:id="@+id/fallDetectionFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <!-- For sticking menu to the bottom -->
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+    </LinearLayout>
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="75dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:menu="@layout/bottom_navigation" />
+        app:menu="@layout/bottom_navigation"
+        />
 
 </LinearLayout>

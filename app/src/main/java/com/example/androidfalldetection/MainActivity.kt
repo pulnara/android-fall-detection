@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_fall_detection.*
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -50,11 +51,11 @@ class MainActivity : AppCompatActivity() {
             //on translation method of accelerometer
             override fun onTranslation(tx: Float, ty: Float, ts: Float) {
                 //Log.i("ACCELEROMETER", "($tx, $ty, $ts)")
-                val coordinatesAsString = "($tx, $ty, $ts)"
+                val coordinatesAsString = "(%.5f, %.5f, %.5f)".format(Locale.ENGLISH, tx, ty, ts)
                 xyz?.text = coordinatesAsString
                 // set the color red if the device moves in positive x axis
                 val accelerometerData = AccelerometerData(tx, ty, ts)
-                magnitude?.text = accelerometerData.countAcceleration().toString()
+                magnitude?.text = "%.5f".format(Locale.ENGLISH, accelerometerData.countAcceleration())
                 fallDetector.detectFall(accelerometerData)
             }
         })

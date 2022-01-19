@@ -17,7 +17,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+
 
 
 class FallDetector : Fragment(R.layout.fragment_fall_detection) {
@@ -30,6 +32,7 @@ class FallDetector : Fragment(R.layout.fragment_fall_detection) {
     var fallCount = 0
     lateinit var fallDetectionView: View
     private lateinit var abortButton: Button
+    private lateinit var animationButtonDrawable: AnimationDrawable
     private lateinit var smsManager: SmsManager
     var smsSent = false
 
@@ -41,13 +44,21 @@ class FallDetector : Fragment(R.layout.fragment_fall_detection) {
         smsManager = SmsManager.getDefault()
         fallDetectionView = inflater.inflate(R.layout.fragment_fall_detection, container, false)
         abortButton = fallDetectionView.findViewById(R.id.abortButton)
+        abortButton.setBackgroundResource(R.drawable.button_animation)
+        animationButtonDrawable = abortButton.background as AnimationDrawable
+
         abortButton.setOnClickListener {
             abortButton.visibility = View.INVISIBLE
-            fallDetectionView.background = null
             resetVariables()
         }
         return fallDetectionView
     }
+
+    override fun onStart() {
+        super.onStart()
+        animationButtonDrawable.start()
+    }
+
 
     fun detectFall(ad: AccelerometerData) {
         val acc = ad.countAcceleration()
@@ -71,18 +82,6 @@ class FallDetector : Fragment(R.layout.fragment_fall_detection) {
         layingOnGroundFlag = false
         landingFlag = false
         running = false
-    }
-
-    fun addBackgroundAnimation() {
-        val drawable = AnimationDrawable()
-        val handler = Handler()
-
-        drawable.addFrame(ColorDrawable(Color.RED), 400)
-        drawable.addFrame(ColorDrawable(Color.GREEN), 400)
-        drawable.setOneShot(false)
-
-        fallDetectionView.setBackground(drawable)
-        handler.postDelayed( { drawable.start() }, 100)
     }
 
     fun playNotificationSound() {
@@ -117,7 +116,6 @@ class FallDetector : Fragment(R.layout.fragment_fall_detection) {
                 fallCount += 1
                 layingOnGroundFlag = false
                 abortButton.visibility = View.VISIBLE
-                addBackgroundAnimation()
                 playNotificationSound()
             }else if (seconds > 3 && landingFlag == false) {
                 //reset variables??
