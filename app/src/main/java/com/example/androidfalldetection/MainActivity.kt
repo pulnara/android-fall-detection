@@ -1,50 +1,65 @@
 package com.example.androidfalldetection
 
-import android.graphics.Color
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_fall_detection.*
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
     // create variables of the two class
     private var accelerometer: Accelerometer? = null
-    private var gyroscope: Gyroscope? = null
+    private val fallDetector: FallDetector = FallDetector()
+    private val configuration: Configuration = Configuration()
+    private lateinit var bottomNavigationView: BottomNavigationView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.SEND_SMS),
+                1
+            )
+        }
         setContentView(R.layout.activity_main)
+        setFragment(fallDetector)
+
+        bottomNavigationView = findViewById(R.id.bottomNavigationView)
+        bottomNavigationView.setOnNavigationItemSelectedListener {
+            when (it.itemId) {
+                R.id.home ->setFragment(fallDetector)
+                R.id.configuration -> setFragment(configuration)
+            }
+
+            true
+        }
 
         // instantiate them with this as context
         accelerometer = Accelerometer(this)
-        gyroscope = Gyroscope(this)
-
         // create a listener for accelerometer
         accelerometer!!.setListener(object : Accelerometer.Listener {
             //on translation method of accelerometer
             override fun onTranslation(tx: Float, ty: Float, ts: Float) {
-                Log.i("ACCELEROMETER", "($tx, $ty, $ts)");
+                //Log.i("ACCELEROMETER", "($tx, $ty, $ts)")
+                val coordinatesAsString = "(%.5f, %.5f, %.5f)".format(Locale.ENGLISH, tx, ty, ts)
+                xyz?.text = coordinatesAsString
                 // set the color red if the device moves in positive x axis
-                if (tx > 1.0f) {
-                    window.decorView.setBackgroundColor(Color.RED)
-                } else if (tx < -1.0f) {
-                    window.decorView.setBackgroundColor(Color.BLUE)
-                }
+                val accelerometerData = AccelerometerData(tx, ty, ts)
+                magnitude?.text = "%.5f".format(Locale.ENGLISH, accelerometerData.countAcceleration())
+                fallDetector.detectFall(accelerometerData)
             }
         })
 
-        // create a listener for gyroscope
-        gyroscope!!.setListener(object : Gyroscope.Listener {
-            // on rotation method of gyroscope
-            override fun onRotation(rx: Float, ry: Float, rz: Float) {
-                // set the color green if the device rotates on positive z axis
-                Log.i("GYROSCOPE", "($rx, $ry, $rz)");
-                if (rz > 1.0f) {
-                    window.decorView.setBackgroundColor(Color.GREEN)
-                } else if (rz < -1.0f) {
-                    window.decorView.setBackgroundColor(Color.YELLOW)
-                }
-            }
-        })
     }
 
     // create on resume method
@@ -54,7 +69,6 @@ class MainActivity : AppCompatActivity() {
         // this will send notification to
         // both the sensors to register
         accelerometer!!.register()
-        gyroscope!!.register()
     }
 
     // create on pause method
@@ -64,7 +78,12 @@ class MainActivity : AppCompatActivity() {
         // this will send notification in
         // both the sensors to unregister
         accelerometer!!.unregister()
-        gyroscope!!.unregister()
     }
+
+    private fun setFragment(fragment: Fragment) =
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fallDetectionFragment, fragment)
+            commit()
+        }
 }
 
